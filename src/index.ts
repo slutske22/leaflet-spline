@@ -1,29 +1,51 @@
 import * as L from "leaflet";
+import "leaflet-curve";
 
-declare module "leaflet" {
-  class Spline extends L.Path {
-    constructor(path: L.LatLngExpression[], options?: L.PathOptions);
+export class Spline extends L.Polyline {
+  _polyline: L.Polyline;
+  _points: [number, number][] = [];
+
+  constructor(path: L.LatLngExpression[], options: L.PathOptions = {}) {
+    super(path, options);
+    this._polyline = L.polyline(path, options);
+    this.transformPoints(path);
   }
 
-  function spline(path: L.LatLngExpression[], options?: L.PathOptions): Spline;
+  /**
+   * Transforms points into proper format for leaflet.curve (must be in [lat, lng] format)
+   */
+  transformPoints(path: L.LatLngExpression[]) {
+    if (Array.isArray(path[0]) && path[0].length === 2) {
+      // If path given is array of array of numbers, it is already in proper format
+      this._points = path as [number, number][];
+    } else if ((path[0] as L.LatLng | L.LatLngLiteral).lat) {
+      // If path is given as latlngs, transform into [number, number] format for
+      this._points = (path as (L.LatLng | L.LatLngLiteral)[]).map((latlng) => [
+        latlng.lat,
+        latlng.lng,
+      ]);
+    }
+  }
+
+  drawBezier() {}
+
+  addTo(map: L.Map | L.LayerGroup<any>): this {
+    map.addLayer(this);
+    return this;
+  }
 }
 
-// @ts-ignore
-L.Spline = L.Path.extend({
-  initialize: function (
+export function spline(
+  path: L.LatLngExpression[],
+  options: L.PathOptions = {}
+) {
+  return new Spline(path, options);
+}
+
+declare module "leaflet" {
+  export class Spline {}
+  export function spline(
     path: L.LatLngExpression[],
-    options: L.PathOptions = {}
-  ) {
-    L.setOptions(this, options);
-    this._setPath(path);
-  },
-
-  _setPath: function (path: L.LatLngExpression[]) {
-    this._coords = path;
-  },
-});
-
-// @ts-ignore
-L.spline = function (path: L.LatLngExpression[], options?: L.PathOptions) {
-  return new L.Spline(path, options);
-};
+    options?: L.PathOptions
+  ): undefined;
+}
