@@ -1,0 +1,39 @@
+{
+  "name": "leaflet-spline",
+  "version": "0.1.0",
+  "description": "Leaflet plugin for drawing splines from polylines and polygons",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel src/example/index.html --open",
+    "build": "parcel src/example/index.html"
+  },
+  "dependencies": {
+    "leaflet-curve": "1.0.0",
+    "parcel-bundler": "^1.6.1"
+  },
+  "devDependencies": {
+    "@types/leaflet": "1.7.9",
+    "@types/lodash": "4.14.178",
+    "leaflet": "1.7.1",
+    "typescript": "4.4.4"
+  },
+  "resolutions": {
+    "@babel/preset-env": "7.13.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slutske22/leaflet-spline.git"
+  },
+  "keywords": [
+    "leaflet",
+    "spline",
+    "polyline",
+    "polygon"
+  ],
+  "author": "Seth Lutske",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/slutske22/leaflet-spline/issues"
+  },
+  "homepage": "https://github.com/slutske22/leaflet-spline#readme"
+}
