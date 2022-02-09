@@ -8,7 +8,7 @@
     "build": "parcel src/example/index.html"
   },
   "dependencies": {
-    "leaflet-curve": "1.0.0",
+    "@elfalem/leaflet-curve": "^0.9.1",
     "parcel-bundler": "^1.6.1"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
+import "@elfalem/leaflet-curve"; // need this why???
 import "./styles.css";
 import { shape1, shape2, TILE_LAYER_URL } from "./constants";
 

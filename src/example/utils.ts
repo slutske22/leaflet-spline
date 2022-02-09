@@ -11,7 +11,7 @@ const defaultStyle = {
   drawVertices: true,
   fill: true,
   weight: 10,
-  color: "rgba(0,0,0,0.2)"
+  color: "rgba(0,0,0,0.2)",
 };
 
 /**
@@ -60,9 +60,11 @@ export class CoordSet {
     if (drawVertices) {
       const group = L.layerGroup();
       L.polyline(this.coords, others).addTo(group);
-      this.coords.forEach((coord) => {
+      this.coords.forEach((coord, i) => {
         L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" })
-          .bindPopup(`<pre>${JSON.stringify(coord, null, 2)}</pre>`)
+          .bindPopup(
+            `<h5>${i}</h5><pre>${JSON.stringify(coord, null, 2)}</pre>`
+          )
           .addTo(group);
       });
       return group;
@@ -77,10 +79,10 @@ export class CoordSet {
     if (drawVertices) {
       const group = L.layerGroup();
       L.polygon(this.coords, others).addTo(group);
-      this.coords.forEach((coord) => {
-        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" }).addTo(
-          group
-        );
+      this.coords.forEach((coord, i) => {
+        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" })
+          .bindPopup(`<h5>${i}</h5>`)
+          .addTo(group);
       });
       return group;
     }
