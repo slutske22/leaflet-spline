@@ -1,8 +1,57 @@
 import * as L from "leaflet";
+import GeoUtil from "leaflet-geometryutil";
 import "@elfalem/leaflet-curve";
 import { CurvePathData } from "@elfalem/leaflet-curve";
 
 type Tuple = [number, number];
+
+/**
+ * Get line length and bearing
+ */
+const line = (coord1: L.Point, coord2: L.Point) => {
+  const lengthX = coord2.x - coord1.x;
+  const lengthY = coord2.y - coord1.y;
+
+  return {
+    length: Math.sqrt(Math.pow(lengthX, 2) + Math.pow(lengthY, 2)),
+    angle: Math.atan2(lengthY, lengthX),
+  };
+};
+
+/**
+ * Gets 2 cubic bezier control points given a current, previous, and next point
+ */
+const controlPoint = (
+  map: L.Map,
+  current: Tuple,
+  previous: Tuple,
+  next: Tuple,
+  reverse?: boolean
+) => {
+  /**
+   * When current is the first or last point of the array, prev and next
+   * dont exist.  Replace with current
+   */
+  const p = previous || current;
+  const n = next || current;
+
+  const currPoint = map.latLngToLayerPoint(L.latLng(current));
+  const prevPoint = map.latLngToLayerPoint(L.latLng(p));
+  const nextPoint = map.latLngToLayerPoint(L.latLng(n));
+
+  // The smoothing ratio
+  const smoothing = 0.15;
+
+  let { length, angle } = line(prevPoint, nextPoint);
+
+  angle = angle + (reverse ? Math.PI : 0);
+  length = length * smoothing;
+
+  const x = currPoint.x + Math.cos(angle) * length;
+  const y = currPoint.y + Math.sin(angle) * length;
+
+  return map.layerPointToLatLng([x, y]);
+};
 
 export class Spline extends L.Polyline {
   _points: Tuple[] = [];
@@ -14,7 +63,7 @@ export class Spline extends L.Polyline {
   constructor(path: L.LatLngExpression[], options: L.PathOptions = {}) {
     super(path, options);
     this.transformPoints(path);
-    this.drawBezier();
+    // this.drawBezier();
   }
 
   /**
@@ -36,50 +85,24 @@ export class Spline extends L.Polyline {
   drawBezier(): L.Curve {
     let points: Tuple[] = [...this._points];
     const first: Tuple = [...points[0]];
-    const second: Tuple = [...points[1]];
 
     /** Whether or not the path given is a closed shape - last point must be same as first */
     const isClosedShape =
       points[0][0] === points[points.length - 1][0] &&
       points[0][1] === points[points.length - 1][1];
 
-    if (isClosedShape) {
-      points.pop();
+    const controlPoints = [];
+    for (let i = 1; i < points.length - 1; i++) {
+      controlPoints.push(
+        controlPoint(this._map, points[i], points[i - 1], points[i + 1])
+      );
     }
 
-    /**
-     * Group points into threes - 1rst and 3rd used to create control point, second corresponds to control
-     * point to be used that gets created by 1rst and 3rd
-     */
-    const triads: [Tuple, Tuple, Tuple][] = [];
-    while (points.length > 2) {
-      const triad: [Tuple, Tuple, Tuple] = [points[0], points[1], points[2]];
-      triads.push(triad);
-      points.shift();
-      points.shift();
-    }
-    if (isClosedShape) {
-      triads.push([points[0], points[1], first]);
-      points.shift();
-      triads.push([points[0], first, second]);
-    }
-
-    /** Control points to be used in creating the bezier curve */
-    const controlPoints = triads
-      // .filter((_t, i) => i % 2)
-      .map((triad) => triad.map((tuple) => L.latLng(tuple)))
-      .map((triad) => {
-        const [p0, p1, p2] = triad;
-        const cpLat = p1.lat * 2 - (p0.lat + p2.lat) / 2;
-        const cpLng = p1.lng * 2 - (p0.lng + p2.lng) / 2;
-        return [cpLat, cpLng];
-      });
-
-    controlPoints.pop();
+    // console.log(controlPoints);
 
     this._controlPoints = L.layerGroup(
-      controlPoints.map(([lat, lng], i) =>
-        L.circleMarker({ lat, lng }).bindPopup(`<h5>cp${i}</h5>`)
+      controlPoints.map(({ lat, lng }, i) =>
+        L.circleMarker({ lat, lng }, { radius: 5 }).bindPopup(`<h5>cp${i}</h5>`)
       )
     );
 
@@ -91,7 +114,7 @@ export class Spline extends L.Polyline {
     this._refPoints = L.layerGroup(
       points
         .map(([lat, lng], i) =>
-          L.circleMarker({ lat, lng }, { color: "grey" }).bindPopup(
+          L.circleMarker({ lat, lng }, { color: "grey", radius: 5 }).bindPopup(
             `<h5>point ${i}</h5><pre>${JSON.stringify(
               { lat, lng },
               null,
@@ -102,32 +125,42 @@ export class Spline extends L.Polyline {
         .filter((_p, i) => i !== 12)
     );
 
-    // points.shift();
-
     const lineTo = points.shift() as number[];
     commands.push(...(["L", lineTo] as CurvePathData)); // draw line to next anchor point
 
-    while (points.length - 1 > 0) {
-      const cp = controlPoints.shift() as number[];
-      points.shift();
-      const desintation = points.shift() as number[];
-      commands.push(...(["Q", cp, desintation] as CurvePathData));
-    }
+    // while (points.length - 1 > 0) {
+    //   // const cp = controlPoints.shift() as number[];
+    //   // points.shift();
+    //   // const desintation = points.shift() as number[];
+    //   // commands.push(...(["Q", cp, desintation] as CurvePathData));
+    // }
 
     commands.push("Z"); // Complete the drawing
 
-    console.log(commands);
+    // console.log(commands);
 
     this._curve = L.curve(commands, { ...this.options, interactive: false });
     return this._curve;
   }
 
-  addTo(map: L.Map | L.LayerGroup<any>): this {
-    // debug:
-    this._refPoints.addTo(map);
-    this._controlPoints.addTo(map);
+  beforeAdd(map: L.Map) {
+    return this;
+  }
 
-    map.addLayer(this._curve);
+  onAdd(map: L.Map) {
+    this.drawBezier();
+    console.log("onAdd");
+    console.log(this._map);
+
+    this.drawBezier();
+    this._controlPoints.addTo(map);
+    this._refPoints.addTo(map);
+
+    return this;
+  }
+
+  addTo(map: L.Map | L.LayerGroup<any>): this {
+    map.addLayer(this);
     return this;
   }
 }
