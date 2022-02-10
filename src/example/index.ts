@@ -14,8 +14,13 @@ export const map = L.map("map", {
 L.tileLayer(TILE_LAYER_URL).addTo(map);
 
 shape1.asPolyline({ drawVertices: false }).addTo(map);
-// shape2.asPolyline().addTo(map);
+shape2.asPolyline().addTo(map);
 
-const mySpline = spline(shape1.coords, { color: "yellow" }).addTo(map);
+const mySpline1 = spline(shape1.coords, { color: "yellow" }).addTo(map);
+
+const mySpline2 = spline(shape2.coords, { color: "yellow" }).addTo(map);
+
 // @ts-expect-error
-window.mySpline = mySpline;
+window.mySpline1 = mySpline1;
+// @ts-expect-error
+window.mySpline2 = mySpline2;

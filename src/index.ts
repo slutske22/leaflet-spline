@@ -27,7 +27,7 @@ const controlPoint = (
   previous: Tuple,
   next: Tuple,
   reverse?: boolean
-) => {
+): Tuple => {
   /**
    * When current is the first or last point of the array, prev and next
    * dont exist.  Replace with current
@@ -40,7 +40,7 @@ const controlPoint = (
   const nextPoint = map.latLngToLayerPoint(L.latLng(n));
 
   // The smoothing ratio
-  const smoothing = 0.15;
+  const smoothing = 0.175;
 
   let { length, angle } = line(prevPoint, nextPoint);
 
@@ -50,7 +50,8 @@ const controlPoint = (
   const x = currPoint.x + Math.cos(angle) * length;
   const y = currPoint.y + Math.sin(angle) * length;
 
-  return map.layerPointToLatLng([x, y]);
+  const { lat, lng } = map.layerPointToLatLng([x, y]);
+  return [lat, lng];
 };
 
 export class Spline extends L.Polyline {
@@ -63,7 +64,6 @@ export class Spline extends L.Polyline {
   constructor(path: L.LatLngExpression[], options: L.PathOptions = {}) {
     super(path, options);
     this.transformPoints(path);
-    // this.drawBezier();
   }
 
   /**
@@ -91,17 +91,34 @@ export class Spline extends L.Polyline {
       points[0][0] === points[points.length - 1][0] &&
       points[0][1] === points[points.length - 1][1];
 
-    const controlPoints = [];
-    for (let i = 1; i < points.length - 1; i++) {
+    /** points.length */
+    const pl = points.length;
+
+    const controlPoints: Tuple[] = [];
+    for (let i = 0; i < pl - 1; i++) {
+      controlPoints.push(
+        controlPoint(this._map, points[i], points[i + 1], points[i - 1])
+      );
       controlPoints.push(
         controlPoint(this._map, points[i], points[i - 1], points[i + 1])
       );
     }
 
-    // console.log(controlPoints);
+    if (!isClosedShape) {
+      /* Remove first (and last) control points for open shapes */
+      controlPoints.shift();
+
+      controlPoints.push(
+        controlPoint(this._map, points[pl], points[pl - 1], points[i + 1])
+      );
+    } else {
+      /* Shift points */
+      const firstCp = controlPoints.shift() as Tuple;
+      controlPoints.push(firstCp);
+    }
 
     this._controlPoints = L.layerGroup(
-      controlPoints.map(({ lat, lng }, i) =>
+      controlPoints.map(([lat, lng], i) =>
         L.circleMarker({ lat, lng }, { radius: 5 }).bindPopup(`<h5>cp${i}</h5>`)
       )
     );
@@ -125,19 +142,27 @@ export class Spline extends L.Polyline {
         .filter((_p, i) => i !== 12)
     );
 
-    const lineTo = points.shift() as number[];
-    commands.push(...(["L", lineTo] as CurvePathData)); // draw line to next anchor point
+    const lineTo = points.shift();
+    commands.push(...(["L", lineTo] as CurvePathData)); // draw line to first point (its a dot), helpful for dev
 
-    // while (points.length - 1 > 0) {
-    //   // const cp = controlPoints.shift() as number[];
-    //   // points.shift();
-    //   // const desintation = points.shift() as number[];
-    //   // commands.push(...(["Q", cp, desintation] as CurvePathData));
-    // }
+    if (isClosedShape) {
+      while (points.length > 0) {
+        const cp1 = controlPoints.shift();
+        const cp2 = controlPoints.shift();
 
-    commands.push("Z"); // Complete the drawing
+        const destination = points.shift();
+        commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
+      }
 
-    // console.log(commands);
+      commands.push("Z"); // Complete the drawing
+    } else {
+      // Starting out, we have
+      const cp1 = controlPoints.shift();
+      const cp2 = controlPoints.shift();
+
+      const desintation = points.shift();
+      commands.push(...(["C", cp1, cp2, desintation] as CurvePathData));
+    }
 
     this._curve = L.curve(commands, { ...this.options, interactive: false });
     return this._curve;
@@ -155,6 +180,7 @@ export class Spline extends L.Polyline {
     this.drawBezier();
     this._controlPoints.addTo(map);
     this._refPoints.addTo(map);
+    this._curve.addTo(map);
 
     return this;
   }
