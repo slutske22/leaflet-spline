@@ -63,7 +63,7 @@ export class CoordSet {
 
     if (drawVertices) {
       const group = L.layerGroup();
-      L.polyline(this.coords, others).addTo(group);
+      L.polyline(this.coords, { ...defaultStyle, ...others }).addTo(group);
       this.coords.forEach((coord, i) => {
         L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" })
           .bindPopup(
@@ -74,7 +74,7 @@ export class CoordSet {
       return group;
     }
 
-    return L.polyline(this.coords, others);
+    return L.polyline(this.coords, { ...defaultStyle, ...others });
   }
 
   asPolygon(options = defaultStyle) {

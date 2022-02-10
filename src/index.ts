@@ -161,18 +161,14 @@ export class Spline extends L.Polyline {
     return this._curve;
   }
 
-  beforeAdd(map: L.Map) {
-    return this;
-  }
-
   onAdd(map: L.Map) {
     this.drawBezier();
     console.log("onAdd");
     console.log(this._map);
 
     this.drawBezier();
-    this._controlPoints.addTo(map);
-    this._refPoints.addTo(map);
+    // this._controlPoints.addTo(map);
+    // this._refPoints.addTo(map);
     this._curve.addTo(map);
 
     return this;
