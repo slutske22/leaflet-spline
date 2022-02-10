@@ -7,7 +7,9 @@ type Tuple = [number, number];
 export class Spline extends L.Polyline {
   _points: Tuple[] = [];
   _curve: L.Curve;
+  // debug:
   _controlPoints: L.LayerGroup;
+  _refPoints: L.LayerGroup;
 
   constructor(path: L.LatLngExpression[], options: L.PathOptions = {}) {
     super(path, options);
@@ -54,26 +56,31 @@ export class Spline extends L.Polyline {
       const triad: [Tuple, Tuple, Tuple] = [points[0], points[1], points[2]];
       triads.push(triad);
       points.shift();
+      points.shift();
     }
     if (isClosedShape) {
       triads.push([points[0], points[1], first]);
-      points.unshift();
+      points.shift();
       triads.push([points[0], first, second]);
     }
 
     /** Control points to be used in creating the bezier curve */
     const controlPoints = triads
-      .filter((_t, i) => i % 2)
+      // .filter((_t, i) => i % 2)
       .map((triad) => triad.map((tuple) => L.latLng(tuple)))
       .map((triad) => {
         const [p0, p1, p2] = triad;
         const cpLat = p1.lat * 2 - (p0.lat + p2.lat) / 2;
         const cpLng = p1.lng * 2 - (p0.lng + p2.lng) / 2;
-        return L.latLng({ lat: cpLat, lng: cpLng });
+        return [cpLat, cpLng];
       });
 
+    controlPoints.pop();
+
     this._controlPoints = L.layerGroup(
-      controlPoints.map((point) => L.circleMarker(point))
+      controlPoints.map(([lat, lng], i) =>
+        L.circleMarker({ lat, lng }).bindPopup(`<h5>cp${i}</h5>`)
+      )
     );
 
     /** Series of SVG commands mixed with coordinates to be used with L.curve */
@@ -81,13 +88,30 @@ export class Spline extends L.Polyline {
 
     points = [...this._points];
 
-    while (points.length - 2 > 0) {
-      const lineTo = points.shift() as number[];
-      commands.push(...(["L", lineTo] as CurvePathData)); // draw line to next anchor point
+    this._refPoints = L.layerGroup(
+      points
+        .map(([lat, lng], i) =>
+          L.circleMarker({ lat, lng }, { color: "grey" }).bindPopup(
+            `<h5>point ${i}</h5><pre>${JSON.stringify(
+              { lat, lng },
+              null,
+              2
+            )}</pre>`
+          )
+        )
+        .filter((_p, i) => i !== 12)
+    );
 
-      const anchor = points.shift() as number[];
-      const inflection = points.shift() as number[];
-      commands.push(...(["Q", anchor, inflection] as CurvePathData));
+    // points.shift();
+
+    const lineTo = points.shift() as number[];
+    commands.push(...(["L", lineTo] as CurvePathData)); // draw line to next anchor point
+
+    while (points.length - 1 > 0) {
+      const cp = controlPoints.shift() as number[];
+      points.shift();
+      const desintation = points.shift() as number[];
+      commands.push(...(["Q", cp, desintation] as CurvePathData));
     }
 
     commands.push("Z"); // Complete the drawing
@@ -99,7 +123,10 @@ export class Spline extends L.Polyline {
   }
 
   addTo(map: L.Map | L.LayerGroup<any>): this {
+    // debug:
+    this._refPoints.addTo(map);
     this._controlPoints.addTo(map);
+
     map.addLayer(this._curve);
     return this;
   }

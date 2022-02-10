@@ -7,7 +7,11 @@ interface ShiftOptions {
   right?: number;
 }
 
-const defaultStyle = {
+interface Style extends L.PathOptions {
+  drawVertices?: boolean;
+}
+
+const defaultStyle: Style = {
   drawVertices: true,
   fill: true,
   weight: 10,

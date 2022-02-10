@@ -13,7 +13,7 @@ export const map = L.map("map", {
 
 L.tileLayer(TILE_LAYER_URL).addTo(map);
 
-shape1.asPolyline().addTo(map);
+shape1.asPolyline({ drawVertices: false }).addTo(map);
 // shape2.asPolyline().addTo(map);
 
 const mySpline = spline(shape1.coords, { color: "yellow" }).addTo(map);
