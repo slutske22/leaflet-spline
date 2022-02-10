@@ -24,8 +24,8 @@ const line = (coord1: L.Point, coord2: L.Point) => {
 const controlPoint = (
   map: L.Map,
   current: Tuple,
-  previous: Tuple,
-  next: Tuple,
+  previous?: Tuple,
+  next?: Tuple,
   reverse?: boolean
 ): Tuple => {
   /**
@@ -107,9 +107,9 @@ export class Spline extends L.Polyline {
     if (!isClosedShape) {
       /* Remove first (and last) control points for open shapes */
       controlPoints.shift();
-
+      /* Push one last control point just before the last reference point, has no 'next' */
       controlPoints.push(
-        controlPoint(this._map, points[pl], points[pl - 1], points[i + 1])
+        controlPoint(this._map, points[pl - 1], undefined, points[pl - 2])
       );
     } else {
       /* Shift points */
@@ -145,23 +145,16 @@ export class Spline extends L.Polyline {
     const lineTo = points.shift();
     commands.push(...(["L", lineTo] as CurvePathData)); // draw line to first point (its a dot), helpful for dev
 
-    if (isClosedShape) {
-      while (points.length > 0) {
-        const cp1 = controlPoints.shift();
-        const cp2 = controlPoints.shift();
-
-        const destination = points.shift();
-        commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
-      }
-
-      commands.push("Z"); // Complete the drawing
-    } else {
-      // Starting out, we have
+    while (points.length > 0) {
       const cp1 = controlPoints.shift();
       const cp2 = controlPoints.shift();
 
-      const desintation = points.shift();
-      commands.push(...(["C", cp1, cp2, desintation] as CurvePathData));
+      const destination = points.shift();
+      commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
+    }
+
+    if (isClosedShape) {
+      commands.push("Z"); // Complete the drawing
     }
 
     this._curve = L.curve(commands, { ...this.options, interactive: false });
