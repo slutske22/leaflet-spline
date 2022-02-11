@@ -86,13 +86,12 @@ export class Spline extends L.Polyline {
     let points: Tuple[] = [...this._points];
     const first: Tuple = [...points[0]];
 
-    /** Whether or not the path given is a closed shape - last point must be same as first */
-    const isClosedShape =
-      points[0][0] === points[points.length - 1][0] &&
-      points[0][1] === points[points.length - 1][1];
-
     /** points.length */
     const pl = points.length;
+
+    /** Whether or not the path given is a closed shape - last point must be same as first */
+    const isClosedShape =
+      points[0][0] === points[pl - 1][0] && points[0][1] === points[pl - 1][1];
 
     const controlPoints: Tuple[] = [];
     for (let i = 0; i < pl - 1; i++) {
@@ -115,6 +114,14 @@ export class Spline extends L.Polyline {
       /* Shift points */
       const firstCp = controlPoints.shift() as Tuple;
       controlPoints.push(firstCp);
+
+      /* Recalculate first cp with last point in points as previous */
+      controlPoints[0] = controlPoint(
+        this._map,
+        points[pl - 1],
+        points[pl - 2],
+        points[0]
+      );
     }
 
     this._controlPoints = L.layerGroup(
