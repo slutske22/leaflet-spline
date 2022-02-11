@@ -65,7 +65,7 @@ export class CoordSet {
       const group = L.layerGroup();
       L.polyline(this.coords, { ...defaultStyle, ...others }).addTo(group);
       this.coords.forEach((coord, i) => {
-        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" })
+        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5)" })
           .bindPopup(
             `<h5>${i}</h5><pre>${JSON.stringify(coord, null, 2)}</pre>`
           )
@@ -84,7 +84,7 @@ export class CoordSet {
       const group = L.layerGroup();
       L.polygon(this.coords, others).addTo(group);
       this.coords.forEach((coord, i) => {
-        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5" })
+        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5)" })
           .bindPopup(`<h5>${i}</h5>`)
           .addTo(group);
       });

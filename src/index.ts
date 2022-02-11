@@ -40,7 +40,7 @@ const controlPoint = (
   const nextPoint = map.latLngToLayerPoint(L.latLng(n));
 
   // The smoothing ratio
-  const smoothing = 0.175;
+  const smoothing = 0.15;
 
   let { length, angle } = line(prevPoint, nextPoint);
 
@@ -131,7 +131,10 @@ export class Spline extends L.Polyline {
     this._refPoints = L.layerGroup(
       points
         .map(([lat, lng], i) =>
-          L.circleMarker({ lat, lng }, { color: "grey", radius: 5 }).bindPopup(
+          L.circleMarker(
+            { lat, lng },
+            { color: "rgba(0,0,0,0.2)", radius: 5 }
+          ).bindPopup(
             `<h5>point ${i}</h5><pre>${JSON.stringify(
               { lat, lng },
               null,
@@ -167,8 +170,8 @@ export class Spline extends L.Polyline {
     console.log(this._map);
 
     this.drawBezier();
-    // this._controlPoints.addTo(map);
-    // this._refPoints.addTo(map);
+    this._controlPoints.addTo(map);
+    this._refPoints.addTo(map);
     this._curve.addTo(map);
 
     return this;
