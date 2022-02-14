@@ -27,7 +27,7 @@ const controlPoint = (
   previous?: Tuple,
   next?: Tuple,
   reverse?: boolean
-): Tuple => {
+) => {
   /**
    * When current is the first or last point of the array, prev and next
    * dont exist.  Replace with current
@@ -51,7 +51,7 @@ const controlPoint = (
   const y = currPoint.y + Math.sin(angle) * length;
 
   const { lat, lng } = map.layerPointToLatLng([x, y]);
-  return [lat, lng];
+  return { cp: [lat, lng], current, previous, next };
 };
 
 export class Spline extends L.Polyline {
@@ -93,7 +93,7 @@ export class Spline extends L.Polyline {
     const isClosedShape =
       points[0][0] === points[pl - 1][0] && points[0][1] === points[pl - 1][1];
 
-    const controlPoints: Tuple[] = [];
+    const controlPoints = [];
     for (let i = 0; i < pl - 1; i++) {
       controlPoints.push(
         controlPoint(this._map, points[i], points[i + 1], points[i - 1])
@@ -112,22 +112,37 @@ export class Spline extends L.Polyline {
       );
     } else {
       /* Shift points */
-      const firstCp = controlPoints.shift() as Tuple;
+      const firstCp = controlPoints.shift();
       controlPoints.push(firstCp);
 
       /* Recalculate first cp with last point in points as previous */
       controlPoints[0] = controlPoint(
         this._map,
-        points[0],
+        points[pl - 1],
+        points[pl - 2],
+        points[1]
+      );
+
+      controlPoints[controlPoints.length - 1] = controlPoint(
+        this._map,
+        points[pl - 1],
         points[1],
-        points[pl]
+        points[pl - 2]
       );
     }
 
     this._controlPoints = L.layerGroup(
-      controlPoints.map(([lat, lng], i) =>
-        L.circleMarker({ lat, lng }, { radius: 5 }).bindPopup(`<h5>cp${i}</h5>`)
-      )
+      controlPoints.map((controlPoint, i) => {
+        const [lat, lng] = controlPoint!.cp;
+        return L.circleMarker({ lat, lng }, { radius: 5 }).bindPopup(
+          `<h5>cp${i}</h5><pre>
+curr: ${JSON.stringify(controlPoint?.current)}
+prev: ${JSON.stringify(controlPoint?.previous)}
+next: ${JSON.stringify(controlPoint?.next)}
+          </pre>`,
+          { closeOnClick: false, autoClose: false }
+        );
+      })
     );
 
     /** Series of SVG commands mixed with coordinates to be used with L.curve */
@@ -160,7 +175,7 @@ export class Spline extends L.Polyline {
       const cp2 = controlPoints.shift();
 
       const destination = points.shift();
-      commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
+      commands.push(...(["C", cp1?.cp, cp2?.cp, destination] as CurvePathData));
     }
 
     if (isClosedShape) {
