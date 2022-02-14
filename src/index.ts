@@ -118,9 +118,9 @@ export class Spline extends L.Polyline {
       /* Recalculate first cp with last point in points as previous */
       controlPoints[0] = controlPoint(
         this._map,
-        points[pl - 1],
-        points[pl - 2],
-        points[0]
+        points[0],
+        points[1],
+        points[pl]
       );
     }
 
@@ -173,10 +173,7 @@ export class Spline extends L.Polyline {
 
   onAdd(map: L.Map) {
     this.drawBezier();
-    console.log("onAdd");
-    console.log(this._map);
 
-    this.drawBezier();
     this._controlPoints.addTo(map);
     this._refPoints.addTo(map);
     this._curve.addTo(map);
