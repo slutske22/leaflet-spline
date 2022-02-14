@@ -175,19 +175,39 @@ export class Spline extends L.Polyline {
       commands.push("Z"); // Complete the drawing
     }
 
-    this._curve = L.curve(commands, { ...this.options, interactive: false });
+    if (!this._curve) {
+      this._curve = L.curve(commands, { ...this.options, interactive: false });
+    } else {
+      this._curve.setPath(commands);
+    }
     return this._curve;
   }
 
   onAdd(map: L.Map) {
     this.drawBezier();
     this._curve.addTo(map);
+
+    map.on("zoomend", () => {
+      this.update();
+    });
+
+    return this;
+  }
+
+  onRemove(map: L.Map): this {
+    map.off("zoomend", () => {
+      this.update();
+    });
     return this;
   }
 
   addTo(map: L.Map | L.LayerGroup<any>): this {
     map.addLayer(this);
     return this;
+  }
+
+  update() {
+    this.drawBezier();
   }
 }
 
