@@ -22,12 +22,13 @@ const line = (coord1: L.Point, coord2: L.Point) => {
  * Gets 2 cubic bezier control points given a current, previous, and next point
  */
 const controlPoint = (
+  smoothing: number,
   map: L.Map,
   current: Tuple,
   previous?: Tuple,
   next?: Tuple,
   reverse?: boolean
-) => {
+): Tuple => {
   /**
    * When current is the first or last point of the array, prev and next
    * dont exist.  Replace with current
@@ -39,9 +40,6 @@ const controlPoint = (
   const prevPoint = map.latLngToLayerPoint(L.latLng(p));
   const nextPoint = map.latLngToLayerPoint(L.latLng(n));
 
-  // The smoothing ratio
-  const smoothing = 0.15;
-
   let { length, angle } = line(prevPoint, nextPoint);
 
   angle = angle + (reverse ? Math.PI : 0);
@@ -51,18 +49,24 @@ const controlPoint = (
   const y = currPoint.y + Math.sin(angle) * length;
 
   const { lat, lng } = map.layerPointToLatLng([x, y]);
-  return { cp: [lat, lng], current, previous, next };
+  return [lat, lng];
 };
+
+interface SplineOptions extends L.PathOptions {
+  /**
+   * Smoothing factor to use when drawing the bezier curve, defaults to 0.15
+   */
+  smoothing?: number;
+}
 
 export class Spline extends L.Polyline {
   _points: Tuple[] = [];
   _curve: L.Curve;
-  // debug:
-  _controlPoints: L.LayerGroup;
-  _refPoints: L.LayerGroup;
+  _smoothing: number;
 
-  constructor(path: L.LatLngExpression[], options: L.PathOptions = {}) {
+  constructor(path: L.LatLngExpression[], options: SplineOptions) {
     super(path, options);
+    this._smoothing = options.smoothing ?? 0.15;
     this.transformPoints(path);
   }
 
@@ -96,10 +100,22 @@ export class Spline extends L.Polyline {
     const controlPoints = [];
     for (let i = 0; i < pl - 1; i++) {
       controlPoints.push(
-        controlPoint(this._map, points[i], points[i + 1], points[i - 1])
+        controlPoint(
+          this._smoothing,
+          this._map,
+          points[i],
+          points[i + 1],
+          points[i - 1]
+        )
       );
       controlPoints.push(
-        controlPoint(this._map, points[i], points[i - 1], points[i + 1])
+        controlPoint(
+          this._smoothing,
+          this._map,
+          points[i],
+          points[i - 1],
+          points[i + 1]
+        )
       );
     }
 
@@ -108,7 +124,13 @@ export class Spline extends L.Polyline {
       controlPoints.shift();
       /* Push one last control point just before the last reference point, has no 'next' */
       controlPoints.push(
-        controlPoint(this._map, points[pl - 1], undefined, points[pl - 2])
+        controlPoint(
+          this._smoothing,
+          this._map,
+          points[pl - 1],
+          undefined,
+          points[pl - 2]
+        )
       );
     } else {
       /* Shift points */
@@ -117,6 +139,7 @@ export class Spline extends L.Polyline {
 
       /* Recalculate first cp with last point in points as previous */
       controlPoints[0] = controlPoint(
+        this._smoothing,
         this._map,
         points[pl - 1],
         points[pl - 2],
@@ -124,6 +147,7 @@ export class Spline extends L.Polyline {
       );
 
       controlPoints[controlPoints.length - 1] = controlPoint(
+        this._smoothing,
         this._map,
         points[pl - 1],
         points[1],
@@ -131,41 +155,10 @@ export class Spline extends L.Polyline {
       );
     }
 
-    this._controlPoints = L.layerGroup(
-      controlPoints.map((controlPoint, i) => {
-        const [lat, lng] = controlPoint!.cp;
-        return L.circleMarker({ lat, lng }, { radius: 5 }).bindPopup(
-          `<h5>cp${i}</h5><pre>
-curr: ${JSON.stringify(controlPoint?.current)}
-prev: ${JSON.stringify(controlPoint?.previous)}
-next: ${JSON.stringify(controlPoint?.next)}
-          </pre>`,
-          { closeOnClick: false, autoClose: false }
-        );
-      })
-    );
-
     /** Series of SVG commands mixed with coordinates to be used with L.curve */
     const commands: CurvePathData = ["M", first]; // Begin with placing pen at first point
 
     points = [...this._points];
-
-    this._refPoints = L.layerGroup(
-      points
-        .map(([lat, lng], i) =>
-          L.circleMarker(
-            { lat, lng },
-            { color: "rgba(0,0,0,0.2)", radius: 5 }
-          ).bindPopup(
-            `<h5>point ${i}</h5><pre>${JSON.stringify(
-              { lat, lng },
-              null,
-              2
-            )}</pre>`
-          )
-        )
-        .filter((_p, i) => i !== 12)
-    );
 
     const lineTo = points.shift();
     commands.push(...(["L", lineTo] as CurvePathData)); // draw line to first point (its a dot), helpful for dev
@@ -175,7 +168,7 @@ next: ${JSON.stringify(controlPoint?.next)}
       const cp2 = controlPoints.shift();
 
       const destination = points.shift();
-      commands.push(...(["C", cp1?.cp, cp2?.cp, destination] as CurvePathData));
+      commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
     }
 
     if (isClosedShape) {
@@ -188,11 +181,7 @@ next: ${JSON.stringify(controlPoint?.next)}
 
   onAdd(map: L.Map) {
     this.drawBezier();
-
-    this._controlPoints.addTo(map);
-    this._refPoints.addTo(map);
     this._curve.addTo(map);
-
     return this;
   }
 
@@ -204,7 +193,7 @@ next: ${JSON.stringify(controlPoint?.next)}
 
 export function spline(
   path: L.LatLngExpression[],
-  options: L.PathOptions = {}
+  options: SplineOptions = {}
 ) {
   return new Spline(path, options);
 }
@@ -213,6 +202,6 @@ declare module "leaflet" {
   export class Spline {}
   export function spline(
     path: L.LatLngExpression[],
-    options?: L.PathOptions
-  ): undefined;
+    options?: SplineOptions
+  ): Spline;
 }
