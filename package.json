@@ -4,8 +4,8 @@
   "description": "Leaflet plugin for drawing splines from polylines and polygons",
   "main": "index.js",
   "scripts": {
-    "start": "parcel src/example/index.html --open",
-    "build": "parcel src/example/index.html"
+    "start": "parcel example/index.html --open",
+    "build": "parcel example/index.html"
   },
   "dependencies": {
     "@elfalem/leaflet-curve": "^0.9.1",
