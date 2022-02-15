@@ -4,7 +4,7 @@
 
 Leaflet-spline is a small plugin for leafletjs that transforms polylines and polygons into bezier splines
 
-<h1 align="center">👀 DEMO 👀</h1>
+<h1 align="center">[👀 DEMO 👀](https://slutske22.github.io/leaflet-spline/)</h1>
 
 ## Install
 
@@ -67,7 +67,7 @@ const mySpline = L.spline(latLngs, {
 
 ## Methods
 
-An `L.Spline` inherits all methods from `L.Polyline`, as well as `.trace` from [`L.Curve`](https://github.com/elfalem/Leaflet.curve#api). Most methods are forwarded to the underlying `L.Curve`, and all `L.Curve` methods are available in the underlying `._curve` property of an `L.Spline`.
+An `L.Spline` inherits all methods from `L.Polyline`, as well as `.trace` from [`L.Curve`](https://github.com/elfalem/Leaflet.curve#api).  Most methods are forwarded to the underlying `L.Curve`, and all `L.Curve` methods are available in the underlying `._curve` property of an `L.Spline`.
 
 ## Closed shapes
 
@@ -77,7 +77,8 @@ leaflet-spline draws polylines by default (as opposed to polygons). If you want 
 const latLngs = [
   [5.1, 2.9], // First entry \
   [6.1, 2.5], //              \
-  [6.2, 2.7][(5.8, 2.4)], //                -> Must be identical //              /
+  [6.2, 2.7]  //                -> Must be identical
+  [5.8, 2.4], //              /
   [5.1, 2.9], // Last entry  /
 ];
 ```
@@ -88,4 +89,4 @@ With a circular point set, you can set the `fill` to true to create the appearan
 const mySpline = L.spline(latLngs, { fill: true });
 ```
 
-See the demo for examples.
+[See the demo](https://slutske22.github.io/leaflet-spline/) for examples.

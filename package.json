@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "parcel example/index.html --open",
-    "build": "parcel example/index.html"
+    "example:build": "parcel build example/index.html --public-url /leaflet-spline/",
+    "predeploy": "npm run example:build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@elfalem/leaflet-curve": "^0.9.1",
@@ -14,6 +16,7 @@
   "devDependencies": {
     "@types/leaflet": "1.7.9",
     "@types/lodash": "4.14.178",
+    "gh-pages": "^3.2.3",
     "leaflet": "1.7.1",
     "typescript": "4.4.4"
   },
