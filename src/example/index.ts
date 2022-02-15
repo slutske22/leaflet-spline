@@ -2,13 +2,13 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "@elfalem/leaflet-curve"; // need this why???
 import "./styles.css";
-import { shape1, shape2, TILE_LAYER_URL } from "./constants";
+import { shape1, shape2, shape3, TILE_LAYER_URL } from "./constants";
 
 import "..";
 
 export const map = L.map("map", {
-  center: [2, -5],
-  zoom: 7,
+  center: [2, -7],
+  zoom: 8,
 });
 
 map.createPane("splines");
@@ -22,7 +22,9 @@ L.tileLayer(TILE_LAYER_URL).addTo(map);
 
 const s1 = shape1.asPolyline();
 const s2 = shape2.asPolyline();
-const originalShapes = L.layerGroup([s1, s2]).addTo(map);
+const s3 = shape3.asPolyline();
+
+const originalShapes = L.layerGroup([s1, s2, s3]).addTo(map);
 
 const mySpline1 = L.spline(shape1.coords, {
   fill: true,

@@ -67,9 +67,9 @@ export class CoordSet {
       const group = L.layerGroup();
 
       L.polyline(this.coords, {
-        ...defaultStyle,
-        ...others,
+        ...options,
         interactive: false,
+        fill: false,
       }).addTo(group);
 
       this.coords.forEach((coord, i) => {

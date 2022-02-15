@@ -66,7 +66,7 @@ export class Spline extends L.Polyline {
 
   constructor(path: L.LatLngExpression[], options: SplineOptions) {
     super(path, options);
-    this._curve = new L.Curve([], options);
+    this._curve = new L.Curve([], { ...options });
     this._smoothing = options.smoothing ?? 0.15;
     this.transformPoints(path);
   }

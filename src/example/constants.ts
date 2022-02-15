@@ -38,4 +38,13 @@ const shape2p = new CoordSet(
   ].map((pair) => L.latLng(pair.reverse() as [number, number]))
 );
 
+export const shape3 = new CoordSet(
+  [
+    [-8, 3],
+    [-9, 2.4],
+    [-7.5, 1.7],
+    [-9.5, 0.7],
+  ].map((pair) => L.latLng(pair.reverse() as [number, number]))
+);
+
 export const shape2 = shape2p.shift({ down: 1.5 });
