@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="./spline.png" width="400px">
+  <img src="./assets/spline.png" width="400px">
 </p>
 
-Leaflet-spline is a small plugin for leafletjs that transforms polylines and polygons into bezier splines
+Leaflet-spline is a small plugin for leafletjs that transforms polylines and polygons into bezier splines. Built on top of [leaflet.curve](https://github.com/elfalem/Leaflet.curve), leaflet-spline transforms polylines and polygons into [cubic svg bezier curves](https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#b%C3%A9zier_curves).
 
-<h1 align="center">[👀 DEMO 👀](https://slutske22.github.io/leaflet-spline/)</h1>
+<h1 align="center"><a href="https://slutske22.github.io/leaflet-spline/" target="_blank">👀 DEMO 👀</a></h1>
 
 ## Install
 
@@ -67,7 +67,7 @@ const mySpline = L.spline(latLngs, {
 
 ## Methods
 
-An `L.Spline` inherits all methods from `L.Polyline`, as well as `.trace` from [`L.Curve`](https://github.com/elfalem/Leaflet.curve#api).  Most methods are forwarded to the underlying `L.Curve`, and all `L.Curve` methods are available in the underlying `._curve` property of an `L.Spline`.
+An `L.Spline` inherits all methods from `L.Polyline`, as well as `.trace` from [`L.Curve`](https://github.com/elfalem/Leaflet.curve#api). Most methods are forwarded to the underlying `L.Curve`, and all `L.Curve` methods are available in the underlying `._curve` property of an `L.Spline`.
 
 ## Closed shapes
 
@@ -77,7 +77,7 @@ leaflet-spline draws polylines by default (as opposed to polygons). If you want 
 const latLngs = [
   [5.1, 2.9], // First entry \
   [6.1, 2.5], //              \
-  [6.2, 2.7]  //                -> Must be identical
+  [6.2, 2.7], //                -> Must be identical
   [5.8, 2.4], //              /
   [5.1, 2.9], // Last entry  /
 ];
@@ -90,3 +90,15 @@ const mySpline = L.spline(latLngs, { fill: true });
 ```
 
 [See the demo](https://slutske22.github.io/leaflet-spline/) for examples.
+
+## Alternatives
+
+TurfJS has a [bezierSpline](https://turfjs.org/docs/#bezierSpline) module that can be used to similar effect. However, their module works by transforming the original pointset into another pointset with more points interpolated along a bezier spline. This plugin leverages leaflet's use of svgs to not calculate intermediate points, but rather use svg path commands to draw perfectly smooth beziers. For comparison:
+
+### TurfJS implementation:
+
+<img src="./assets/turfjs.png">
+
+### leaflet-spline implementation:
+
+<img src="./assets/lspline.png">

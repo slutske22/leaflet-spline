@@ -9,6 +9,10 @@
     "lib": ["es2019", "dom"],
     "rootDir": "src",
     "moduleResolution": "node",
-    "strictPropertyInitialization": false
-  }
+    "allowSyntheticDefaultImports": true,
+    "strictPropertyInitialization": false,
+    "outDir": "build",
+    "declaration": true
+  },
+  "include": ["src/*"]
 }

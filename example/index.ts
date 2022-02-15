@@ -4,7 +4,7 @@ import "@elfalem/leaflet-curve"; // need this why???
 import "./styles.css";
 import { shape1, shape2, shape3, TILE_LAYER_URL } from "./constants";
 
-import "../src";
+import "../build";
 
 export const map = L.map("map", {
   center: [2, -6.6],

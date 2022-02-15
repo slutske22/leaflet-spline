@@ -4,11 +4,16 @@
   "description": "Leaflet plugin for drawing splines from polylines and polygons",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "start": "parcel example/index.html --open",
     "example:build": "parcel build example/index.html --public-url /leaflet-spline/",
     "predeploy": "npm run example:build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "checkoutput": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz"
   },
+  "files": [
+    "build"
+  ],
   "dependencies": {
     "@elfalem/leaflet-curve": "^0.9.1",
     "parcel-bundler": "^1.6.1"
@@ -31,7 +36,8 @@
     "leaflet",
     "spline",
     "polyline",
-    "polygon"
+    "polygon",
+    "bezier"
   ],
   "author": "Seth Lutske",
   "license": "MIT",
