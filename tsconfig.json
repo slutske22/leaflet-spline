@@ -9,6 +9,7 @@
     "lib": ["es2019", "dom"],
     "rootDir": "src",
     "moduleResolution": "node",
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "resolveJsonModule": true
   }
 }

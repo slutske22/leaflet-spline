@@ -3,6 +3,7 @@ import L from "leaflet";
 import "@elfalem/leaflet-curve"; // need this why???
 import "./styles.css";
 import { shape1, shape2, TILE_LAYER_URL } from "./constants";
+import sample from "./sample.json";
 
 import "..";
 
@@ -23,6 +24,8 @@ L.tileLayer(TILE_LAYER_URL).addTo(map);
 const s1 = shape1.asPolyline();
 const s2 = shape2.asPolyline();
 const originalShapes = L.layerGroup([s1, s2]).addTo(map);
+
+/* Simple splines: */
 
 const mySpline1 = L.spline(shape1.coords, {
   fill: true,
@@ -53,6 +56,19 @@ const mySpline2 = L.spline(shape2.coords, {
 window.mySpline1 = mySpline1;
 // @ts-expect-error
 window.mySpline2 = mySpline2;
+
+/* GeoJSON splines */
+const geojson = L.geoJSON(sample, {
+  style: (feature) => ({ color: "rgba(0,0,0,0.5)" }),
+}).addTo(map);
+
+const geojsonWithSpline = L.geoJSON(sample, {
+  // style: (feature) => ({ color: "yellow" }),
+  spline: true,
+}).addTo(map);
+
+// @ts-expect-error
+window.geojsonWithSpline = geojsonWithSpline;
 
 L.control
   .layers(

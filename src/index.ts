@@ -1,7 +1,6 @@
 import L from "leaflet";
 import "@elfalem/leaflet-curve";
 import { CurvePathData } from "@elfalem/leaflet-curve";
-import { Feature, LineString, MultiLineString } from "geojson";
 
 type Tuple = [number, number];
 
@@ -277,7 +276,6 @@ export class Spline extends L.Polyline {
     content: ((layer: L.Layer) => L.Content) | L.Content | L.Popup,
     options?: L.PopupOptions
   ): this {
-    console.log(options);
     this._curve.bindPopup(content, options);
     return this;
   }
@@ -371,6 +369,127 @@ export class Spline extends L.Polyline {
   }
 }
 
+interface SmoothingOption {
+  /**
+   * The smoothing factor to use on splines
+   */
+  smoothing: number;
+}
+
+interface GeoJsonWithSpline extends L.GeoJSONOptions {
+  /**
+   * Whether or not to transform polylines and polygons into splines
+   */
+  spline?: true | SmoothingOption;
+}
+
+L.GeoJSON.include({
+  initialize: function (geojson, options) {
+    L.Util.setOptions(this, options);
+
+    console.log(this.options);
+
+    this._layers = {};
+
+    if (geojson) {
+      this.addData(geojson);
+    }
+  },
+
+  geometryToLayer(geojson: any, options: GeoJsonWithSpline) {
+    var geometry = geojson.type === "Feature" ? geojson.geometry : geojson,
+      coords = geometry ? geometry.coordinates : null,
+      layers = [],
+      pointToLayer = options && options.pointToLayer,
+      _coordsToLatLng =
+        (options && options.coordsToLatLng) || L.GeoJSON.coordsToLatLng,
+      latlng,
+      latlngs,
+      i,
+      len;
+
+    console.log(this.options);
+
+    if (!coords && !geometry) {
+      return null;
+    }
+
+    switch (geometry.type) {
+      case "Point":
+        latlng = _coordsToLatLng(coords);
+        return this._pointToLayer(pointToLayer, geojson, latlng, options);
+
+      case "MultiPoint":
+        for (i = 0, len = coords.length; i < len; i++) {
+          latlng = _coordsToLatLng(coords[i]);
+          layers.push(
+            this._pointToLayer(pointToLayer, geojson, latlng, options)
+          );
+        }
+        return new L.FeatureGroup(layers);
+
+      case "LineString":
+        latlngs = L.GeoJSON.coordsToLatLngs(
+          coords,
+          geometry.type === "LineString" ? 0 : 1,
+          _coordsToLatLng
+        );
+        if (options.spline) {
+          console.log("here");
+          return new L.Spline(
+            latlngs,
+            // @ts-expect-error
+            options.spline
+              ? {
+                  smoothing:
+                    (options.spline as SmoothingOption)?.smoothing ?? 0.15,
+                }
+              : undefined
+          );
+        } else {
+          return new L.Polyline(latlngs, options);
+        }
+
+      case "MultiLineString":
+        latlngs = L.GeoJSON.coordsToLatLngs(
+          coords,
+          geometry.type === "LineString" ? 0 : 1,
+          _coordsToLatLng
+        );
+        return new L.Polyline(latlngs, options);
+
+      case "Polygon":
+      case "MultiPolygon":
+        latlngs = L.GeoJSON.coordsToLatLngs(
+          coords,
+          geometry.type === "Polygon" ? 1 : 2,
+          _coordsToLatLng
+        );
+        return new L.Polygon(latlngs, options);
+
+      case "GeometryCollection":
+        for (i = 0, len = geometry.geometries.length; i < len; i++) {
+          var layer = L.GeoJSON.geometryToLayer(
+            {
+              geometry: geometry.geometries[i],
+              type: "Feature",
+              properties: geojson.properties,
+            },
+            options
+          );
+
+          if (layer) {
+            layers.push(layer);
+          }
+        }
+        return new L.FeatureGroup(layers);
+
+      default:
+        throw new Error("Invalid GeoJSON object.");
+    }
+  },
+});
+
 export function spline(
   path: L.LatLngExpression[],
   options: SplineOptions = {}
@@ -379,7 +498,9 @@ export function spline(
 }
 
 declare module "leaflet" {
-  export class Spline extends L.Polyline {}
+  export class Spline extends L.Polyline {
+    constructor(path: L.LatLngExpression[], options: SplineOptions);
+  }
   export function spline(
     path: L.LatLngExpression[],
     options?: SplineOptions
