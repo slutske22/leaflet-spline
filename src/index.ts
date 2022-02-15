@@ -1,5 +1,4 @@
-import * as L from "leaflet";
-import GeoUtil from "leaflet-geometryutil";
+import L from "leaflet";
 import "@elfalem/leaflet-curve";
 import { CurvePathData } from "@elfalem/leaflet-curve";
 
@@ -219,9 +218,14 @@ export function spline(
 }
 
 declare module "leaflet" {
-  export class Spline {}
+  export class Spline extends L.Polyline {}
   export function spline(
     path: L.LatLngExpression[],
     options?: SplineOptions
   ): Spline;
 }
+
+L.Spline = Spline;
+L.spline = spline;
+
+export {};
