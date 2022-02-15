@@ -1,7 +1,7 @@
 {
   "name": "leaflet-spline",
   "version": "0.1.0",
-  "description": "Leaflet plugin for drawing splines from polylines and polygons",
+  "description": "Leaflet plugin for drawing bezier splines from polylines and polygons",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -15,15 +15,18 @@
     "build"
   ],
   "dependencies": {
-    "@elfalem/leaflet-curve": "^0.9.1",
-    "parcel-bundler": "^1.6.1"
+    "@elfalem/leaflet-curve": "^0.9.1"
   },
   "devDependencies": {
     "@types/leaflet": "1.7.9",
     "@types/lodash": "4.14.178",
     "gh-pages": "^3.2.3",
     "leaflet": "1.7.1",
+    "parcel-bundler": "^1.6.1",
     "typescript": "4.4.4"
+  },
+  "peerDependencies": {
+    "leaflet": "1.7.1"
   },
   "resolutions": {
     "@babel/preset-env": "7.13.8"
