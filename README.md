@@ -48,7 +48,7 @@ Note if you are using synthetic default imports with TypeScript, you _must_ impo
 import * as L from "leaflet";
 import { spline } from "leaflet-spline";
 
-const mySpline = spline(latLngs);
+const mySpline: L.Spline = spline(latLngs);
 ```
 
 ## Options
