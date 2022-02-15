@@ -15,10 +15,10 @@ Leaflet-spline is a small plugin for leafletjs that transforms polylines and pol
 You can import leaflet-spline, and `L.spline` becomes available:
 
 ```js
-import L from 'leaflet';
-import 'leaflet-spline';
+import L from "leaflet";
+import "leaflet-spline";
 
-const map = L.map('mapdiv', <MapOptions>);
+const map = L.map("mapdiv", mapOptions);
 
 const latLngs = [
   [-5.9765, 2.9542],
