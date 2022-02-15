@@ -65,6 +65,10 @@ const mySpline = L.spline(latLngs, {
 });
 ```
 
+## Methods
+
+An `L.Spline` inherits all methods from `L.Polyline`, as well as `.trace` from [`L.Curve`](https://github.com/elfalem/Leaflet.curve#api). Most methods are forwarded to the underlying `L.Curve`, and all `L.Curve` methods are available in the underlying `._curve` property of an `L.Spline`.
+
 ## Closed shapes
 
 leaflet-spline draws polylines by default (as opposed to polygons). If you want the appearance of a closed-polygon shape, you must ensure that your set of points has the exact same coordinate for the first and last entries:
@@ -73,8 +77,7 @@ leaflet-spline draws polylines by default (as opposed to polygons). If you want 
 const latLngs = [
   [5.1, 2.9], // First entry \
   [6.1, 2.5], //              \
-  [6.2, 2.7]  //                -> Must be identical
-  [5.8, 2.4], //              /
+  [6.2, 2.7][(5.8, 2.4)], //                -> Must be identical //              /
   [5.1, 2.9], // Last entry  /
 ];
 ```

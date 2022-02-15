@@ -363,11 +363,16 @@ export class Spline extends L.Polyline {
     return this._curve.getElement();
   }
 
-  /* Polyline options from L.Polyline */
+  /* Polyline methods from L.Polyline */
   setLatLngs(latlngs: L.LatLngExpression[]): this {
     this._transformPoints(latlngs);
     this.drawBezier();
     return this;
+  }
+
+  /* Curve methods from L.Curve */
+  trace(samplingDistance: number[]): L.LatLng[] {
+    return this._curve.trace(samplingDistance);
   }
 }
 
