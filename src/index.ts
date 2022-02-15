@@ -68,13 +68,13 @@ export class Spline extends L.Polyline {
     super(path, options);
     this._curve = new L.Curve([], { ...options });
     this._smoothing = options.smoothing ?? 0.15;
-    this.transformPoints(path);
+    this._transformPoints(path);
   }
 
   /**
    * Transforms points into proper format for leaflet.curve (must be in [lat, lng] format)
    */
-  transformPoints(path: L.LatLngExpression[]) {
+  _transformPoints(path: L.LatLngExpression[]) {
     if (Array.isArray(path[0]) && path[0].length === 2) {
       // If path given is array of array of numbers, it is already in proper format
       this._points = path as Tuple[];
@@ -365,7 +365,7 @@ export class Spline extends L.Polyline {
 
   /* Polyline options from L.Polyline */
   setLatLngs(latlngs: L.LatLngExpression[]): this {
-    this.transformPoints(latlngs);
+    this._transformPoints(latlngs);
     this.drawBezier();
     return this;
   }
@@ -379,7 +379,11 @@ export function spline(
 }
 
 declare module "leaflet" {
-  export class Spline extends L.Polyline {}
+  export class Spline extends L.Polyline {
+    constructor(path: L.LatLngExpression[], options: SplineOptions);
+    drawBezier(): void;
+    _smoothing: number;
+  }
   export function spline(
     path: L.LatLngExpression[],
     options?: SplineOptions
