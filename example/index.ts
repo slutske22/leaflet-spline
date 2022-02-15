@@ -7,7 +7,7 @@ import { shape1, shape2, shape3, TILE_LAYER_URL } from "./constants";
 import "../src";
 
 export const map = L.map("map", {
-  center: [2, -7],
+  center: [2, -6.6],
   zoom: 8,
 });
 
