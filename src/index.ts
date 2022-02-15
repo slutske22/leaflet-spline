@@ -1,6 +1,7 @@
 import L from "leaflet";
 import "@elfalem/leaflet-curve";
 import { CurvePathData } from "@elfalem/leaflet-curve";
+import { Feature, LineString, MultiLineString } from "geojson";
 
 type Tuple = [number, number];
 
@@ -65,6 +66,7 @@ export class Spline extends L.Polyline {
 
   constructor(path: L.LatLngExpression[], options: SplineOptions) {
     super(path, options);
+    this._curve = new L.Curve([], options);
     this._smoothing = options.smoothing ?? 0.15;
     this.transformPoints(path);
   }
@@ -175,11 +177,18 @@ export class Spline extends L.Polyline {
     }
 
     if (!this._curve) {
-      this._curve = L.curve(commands, { ...this.options, interactive: false });
+      this._curve = L.curve(commands, { ...this.options });
     } else {
       this._curve.setPath(commands);
     }
     return this._curve;
+  }
+
+  /**
+   * Redraw bezier on update
+   */
+  update() {
+    this.drawBezier();
   }
 
   onAdd(map: L.Map) {
@@ -197,16 +206,168 @@ export class Spline extends L.Polyline {
     map.off("zoomend", () => {
       this.update();
     });
+    this._curve.remove();
     return this;
   }
 
-  addTo(map: L.Map | L.LayerGroup<any>): this {
-    map.addLayer(this);
+  /* -------- Forward methods to this._curve -------- */
+
+  /* Events from L.Evented */
+
+  on(type: any, fn?: any, context?: any): this {
+    this._curve.on(type, fn, context);
     return this;
   }
+  off(type?: any, fn?: any, context?: any): this {
+    this._curve.off(type, fn, context);
+    return this;
+  }
+  once(type: any, fn?: any, context?: any): this {
+    this._curve.once(type, fn, context);
+    return this;
+  }
+  fire(type: string, data?: any, propagate?: boolean): this {
+    this._curve.once(type, data, propagate);
+    return this;
+  }
+  listens(type: string): boolean {
+    return this._curve.listens(type);
+  }
+  addEventParent(obj: L.Evented): this {
+    this._curve.addEventParent(obj);
+    return this;
+  }
+  removeEventParent(obj: L.Evented): this {
+    this._curve.removeEventParent(obj);
+    return this;
+  }
+  addEventListener(type: any, fn?: any, context?: any): this {
+    this._curve.addEventListener(type, fn, context);
+    return this;
+  }
+  removeEventListener(type: any, fn?: any, context?: any): this {
+    this._curve.removeEventListener(type, fn, context);
+    return this;
+  }
+  clearAllEventListeners(): this {
+    this._curve.clearAllEventListeners();
+    return this;
+  }
+  fireEvent(type: string, data?: any, propagate?: boolean): this {
+    this._curve.fireEvent(type, data, propagate);
+    return this;
+  }
+  hasEventListeners(type: string): boolean {
+    return this._curve.hasEventListeners(type);
+  }
 
-  update() {
+  /* Layer methods from L.Layer */
+  remove(): this {
+    this._curve.remove();
+    return this;
+  }
+  removeFrom(map: L.Map): this {
+    this._curve.removeFrom(map);
+    return this;
+  }
+  getPane(name?: string): HTMLElement | undefined {
+    return this._curve.getPane(name);
+  }
+  bindPopup(
+    content: ((layer: L.Layer) => L.Content) | L.Content | L.Popup,
+    options?: L.PopupOptions
+  ): this {
+    console.log(options);
+    this._curve.bindPopup(content, options);
+    return this;
+  }
+  unbindPopup(): this {
+    this._curve.unbindPopup();
+    return this;
+  }
+  openPopup(latlng?: L.LatLngExpression): this {
+    this._curve.openPopup(latlng);
+    return this;
+  }
+  closePopup(): this {
+    this._curve.closePopup();
+    return this;
+  }
+  togglePopup(): this {
+    this._curve.togglePopup();
+    return this;
+  }
+  isPopupOpen(): boolean {
+    return this._curve.isPopupOpen();
+  }
+  setPopupContent(content: L.Content | L.Popup): this {
+    this._curve.setPopupContent(content);
+    return this;
+  }
+  getPopup(): L.Popup | undefined {
+    return this._curve.getPopup();
+  }
+  bindTooltip(
+    content: ((layer: L.Layer) => L.Content) | L.Tooltip | L.Content,
+    options?: L.TooltipOptions
+  ): this {
+    this._curve.bindTooltip(content, options);
+    return this;
+  }
+  unbindTooltip(): this {
+    this._curve.unbindTooltip();
+    return this;
+  }
+  openTooltip(latlng?: L.LatLngExpression): this {
+    this._curve.openTooltip(latlng);
+    return this;
+  }
+  closeTooltip(): this {
+    this._curve.closeTooltip();
+    return this;
+  }
+  toggleTooltip(): this {
+    this._curve.toggleTooltip();
+    return this;
+  }
+  isTooltipOpen(): boolean {
+    return this._curve.isTooltipOpen();
+  }
+  setTooltipContent(content: L.Content | L.Tooltip): this {
+    this._curve.setTooltipContent(content);
+    return this;
+  }
+  getTooltip(): L.Tooltip | undefined {
+    return this._curve.getTooltip();
+  }
+
+  /* Path methods from L.Path */
+  redraw(): this {
+    this._curve.redraw();
+    return this;
+  }
+  setStyle(style: L.PathOptions): this {
+    L.Util.setOptions(this, style);
+    this._curve.setStyle(style);
+    return this;
+  }
+  bringToFront(): this {
+    this._curve.bringToFront();
+    return this;
+  }
+  bringToBack(): this {
+    this._curve.bringToBack();
+    return this;
+  }
+  getElement(): Element | undefined {
+    return this._curve.getElement();
+  }
+
+  /* Polyline options from L.Polyline */
+  setLatLngs(latlngs: L.LatLngExpression[]): this {
+    this.transformPoints(latlngs);
     this.drawBezier();
+    return this;
   }
 }
 

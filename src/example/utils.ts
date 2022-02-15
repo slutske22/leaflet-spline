@@ -58,19 +58,28 @@ export class CoordSet {
     return new CoordSet(newCoords);
   }
 
-  asPolyline(options = defaultStyle) {
-    const { drawVertices, ...others } = options;
+  asPolyline(useroptions = defaultStyle) {
+    const options = { ...defaultStyle, ...useroptions };
+
+    const { drawVertices, fill, ...others } = options;
 
     if (drawVertices) {
       const group = L.layerGroup();
-      L.polyline(this.coords, { ...defaultStyle, ...others }).addTo(group);
+
+      L.polyline(this.coords, {
+        ...defaultStyle,
+        ...others,
+        interactive: false,
+      }).addTo(group);
+
       this.coords.forEach((coord, i) => {
-        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5)" })
-          .bindPopup(
-            `<h5>${i}</h5><pre>${JSON.stringify(coord, null, 2)}</pre>`
-          )
-          .addTo(group);
+        L.circleMarker(coord, {
+          radius: 5,
+          color: "rgba(0,0,0,0.5)",
+          interactive: false,
+        }).addTo(group);
       });
+
       return group;
     }
 
@@ -78,15 +87,17 @@ export class CoordSet {
   }
 
   asPolygon(options = defaultStyle) {
-    const { drawVertices, ...others } = options;
+    const { drawVertices, fill, ...others } = options;
 
     if (drawVertices) {
       const group = L.layerGroup();
-      L.polygon(this.coords, others).addTo(group);
+      L.polygon(this.coords, { ...others, interactive: false }).addTo(group);
       this.coords.forEach((coord, i) => {
-        L.circleMarker(coord, { radius: 5, color: "rgba(0,0,0,0.5)" })
-          .bindPopup(`<h5>${i}</h5>`)
-          .addTo(group);
+        L.circleMarker(coord, {
+          radius: 5,
+          color: "rgba(0,0,0,0.5)",
+          interactive: false,
+        }).addTo(group);
       });
       return group;
     }
