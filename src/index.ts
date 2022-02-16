@@ -52,7 +52,7 @@ const controlPoint = (
   return [lat, lng];
 };
 
-interface SplineOptions extends L.PathOptions {
+export interface SplineOptions extends L.PolylineOptions {
   /**
    * Smoothing factor to use when drawing the bezier curve, defaults to 0.15
    */
@@ -88,99 +88,107 @@ export class Spline extends L.Polyline {
   }
 
   drawBezier(): L.Curve {
-    let points: Tuple[] = [...this._points];
-    const first: Tuple = [...points[0]];
+    /**
+     * Check to make sure there is a map already attached to spline option,
+     * required for controlPoint function, which requires map projection functions
+     */
+    if (this._map) {
+      let points: Tuple[] = [...this._points];
+      const first: Tuple = [...points[0]];
 
-    /** points.length */
-    const pl = points.length;
+      /** points.length */
+      const pl = points.length;
 
-    /** Whether or not the path given is a closed shape - last point must be same as first */
-    const isClosedShape =
-      points[0][0] === points[pl - 1][0] && points[0][1] === points[pl - 1][1];
+      /** Whether or not the path given is a closed shape - last point must be same as first */
+      const isClosedShape =
+        points[0][0] === points[pl - 1][0] &&
+        points[0][1] === points[pl - 1][1];
 
-    const controlPoints = [];
-    for (let i = 0; i < pl - 1; i++) {
-      controlPoints.push(
-        controlPoint(
-          this._smoothing,
-          this._map,
-          points[i],
-          points[i + 1],
-          points[i - 1]
-        )
-      );
-      controlPoints.push(
-        controlPoint(
-          this._smoothing,
-          this._map,
-          points[i],
-          points[i - 1],
-          points[i + 1]
-        )
-      );
-    }
+      const controlPoints = [];
+      for (let i = 0; i < pl - 1; i++) {
+        controlPoints.push(
+          controlPoint(
+            this._smoothing,
+            this._map,
+            points[i],
+            points[i + 1],
+            points[i - 1]
+          )
+        );
+        controlPoints.push(
+          controlPoint(
+            this._smoothing,
+            this._map,
+            points[i],
+            points[i - 1],
+            points[i + 1]
+          )
+        );
+      }
 
-    if (!isClosedShape) {
-      /* Remove first (and last) control points for open shapes */
-      controlPoints.shift();
-      /* Push one last control point just before the last reference point, has no 'next' */
-      controlPoints.push(
-        controlPoint(
+      if (!isClosedShape) {
+        /* Remove first (and last) control points for open shapes */
+        controlPoints.shift();
+        /* Push one last control point just before the last reference point, has no 'next' */
+        controlPoints.push(
+          controlPoint(
+            this._smoothing,
+            this._map,
+            points[pl - 1],
+            undefined,
+            points[pl - 2]
+          )
+        );
+      } else {
+        /* Shift points */
+        const firstCp = controlPoints.shift();
+        controlPoints.push(firstCp);
+
+        /* Recalculate first cp with last point in points as previous */
+        controlPoints[0] = controlPoint(
           this._smoothing,
           this._map,
           points[pl - 1],
-          undefined,
+          points[pl - 2],
+          points[1]
+        );
+
+        controlPoints[controlPoints.length - 1] = controlPoint(
+          this._smoothing,
+          this._map,
+          points[pl - 1],
+          points[1],
           points[pl - 2]
-        )
-      );
-    } else {
-      /* Shift points */
-      const firstCp = controlPoints.shift();
-      controlPoints.push(firstCp);
+        );
+      }
 
-      /* Recalculate first cp with last point in points as previous */
-      controlPoints[0] = controlPoint(
-        this._smoothing,
-        this._map,
-        points[pl - 1],
-        points[pl - 2],
-        points[1]
-      );
+      /** Series of SVG commands mixed with coordinates to be used with L.curve */
+      const commands: CurvePathData = ["M", first]; // Begin with placing pen at first point
 
-      controlPoints[controlPoints.length - 1] = controlPoint(
-        this._smoothing,
-        this._map,
-        points[pl - 1],
-        points[1],
-        points[pl - 2]
-      );
+      points = [...this._points];
+
+      const lineTo = points.shift();
+      commands.push(...(["L", lineTo] as CurvePathData)); // draw line to first point (its a dot), helpful for dev
+
+      while (points.length > 0) {
+        const cp1 = controlPoints.shift();
+        const cp2 = controlPoints.shift();
+
+        const destination = points.shift();
+        commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
+      }
+
+      if (isClosedShape) {
+        commands.push("Z"); // Complete the drawing
+      }
+
+      if (!this._curve) {
+        this._curve = L.curve(commands, { ...this.options });
+      } else {
+        this._curve.setPath(commands);
+      }
     }
 
-    /** Series of SVG commands mixed with coordinates to be used with L.curve */
-    const commands: CurvePathData = ["M", first]; // Begin with placing pen at first point
-
-    points = [...this._points];
-
-    const lineTo = points.shift();
-    commands.push(...(["L", lineTo] as CurvePathData)); // draw line to first point (its a dot), helpful for dev
-
-    while (points.length > 0) {
-      const cp1 = controlPoints.shift();
-      const cp2 = controlPoints.shift();
-
-      const destination = points.shift();
-      commands.push(...(["C", cp1, cp2, destination] as CurvePathData));
-    }
-
-    if (isClosedShape) {
-      commands.push("Z"); // Complete the drawing
-    }
-
-    if (!this._curve) {
-      this._curve = L.curve(commands, { ...this.options });
-    } else {
-      this._curve.setPath(commands);
-    }
     return this._curve;
   }
 
@@ -389,6 +397,7 @@ declare module "leaflet" {
     drawBezier(): void;
     _smoothing: number;
   }
+
   export function spline(
     path: L.LatLngExpression[],
     options?: SplineOptions
@@ -397,5 +406,3 @@ declare module "leaflet" {
 
 L.Spline = Spline;
 L.spline = spline;
-
-export {};
