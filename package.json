@@ -1,6 +1,6 @@
 {
   "name": "leaflet-spline",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Leaflet plugin for drawing bezier splines from polylines and polygons",
   "main": "build/index.js",
   "scripts": {
